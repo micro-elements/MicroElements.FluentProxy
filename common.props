@@ -1,0 +1,13 @@
+<Project>
+  <Import Project="version.props" />
+  <PropertyGroup>
+    <Product>MicroElements.FluentProxy</Product>
+    <Copyright>2018</Copyright>
+    <Authors>micro-elements</Authors>
+    <PackageIconUrl></PackageIconUrl>
+    <PackageProjectUrl>https://github.com/micro-elements/MicroElements.FluentProxy</PackageProjectUrl>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/micro-elements/MicroElements.FluentProxy/master/LICENSE</PackageLicenseUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/micro-elements/MicroElements.FluentProxy</RepositoryUrl>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RuleSet Name="Rules for analyzers" Description="Code analysis rules" ToolsVersion="15.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="RuleSet https://raw.githubusercontent.com/dotnet/roslyn/master/src/Compilers/Core/Portable/RuleSet/RuleSetSchema.xsd">
+  <IncludeAll Action="Warning" />
+  <Rules AnalyzerId="Microsoft.Analyzers.ManagedCodeAnalysis" RuleNamespace="Microsoft.Rules.Managed">
+  </Rules>
+  <Rules AnalyzerId="Microsoft.CodeAnalysis.CSharp.Features" RuleNamespace="Microsoft.CodeAnalysis.CSharp.Features">
+  </Rules>
+  <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
+    <!--SA1200UsingDirectivesMustBePlacedCorrectly-->
+    <Rule Id="SA1200" Action="None" />
+    <!--SA1101PrefixLocalCallsWithThis-->
+    <Rule Id="SA1101" Action="None" />
+    <!--SA1503BracesMustNotBeOmitted-->
+    <Rule Id="SA1503" Action="None" />
+  </Rules>
+</RuleSet>

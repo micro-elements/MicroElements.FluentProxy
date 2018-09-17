@@ -1,6 +1,7 @@
 // Copyright (c) MicroElements. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,7 +17,7 @@ namespace MicroElements.FluentProxy
 
         public Task<FluentProxyServer> CreateServer(IFluentProxySettings settings, CancellationToken cancellationToken = default)
         {
-            string serverKey = $"{settings.ExternalUrl};{settings.InternalPort}";
+            string serverKey = $"{new Uri(settings.ExternalUrl).Authority};{settings.InternalPort}";
             return _webHosts.GetOrAdd(serverKey, url => CreateServerInternal(settings, cancellationToken));
         }
 

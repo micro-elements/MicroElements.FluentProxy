@@ -24,6 +24,13 @@ namespace MicroElements.FluentProxy
         /// </summary>
         int InternalPort { get; }
 
+        bool NoProxy { get; }
+        bool CopyHeadersFromRequest { get; }
+        bool CopyHeadersFromResponse { get; }
+
+        string[] RequestHeadersNoCopy { get; }
+        string[] ResponseHeadersNoCopy { get; }
+
         Func<IFluentProxySettings, HttpClient> CreateHttpClient { get; }
         Func<HttpClient, IFluentProxySettings, HttpClient> InitializeHttpClient { get; }
         ILogger Logger { get; }

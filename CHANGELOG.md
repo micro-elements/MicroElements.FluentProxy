@@ -1,3 +1,6 @@
+# 0.2.0
+- Extended settings and request processing
+
 # 0.1.0
 - Initial version
 

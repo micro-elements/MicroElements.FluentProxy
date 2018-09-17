@@ -8,8 +8,17 @@ namespace MicroElements.FluentProxy
     public class FluentProxySettings : IFluentProxySettings
     {
         public int InternalPort { get; set; }
+        
+
         public string ExternalUrl { get; set; }
         public TimeSpan? Timeout { get; set; }
+
+        public bool NoProxy { get; set; } = true;
+        public bool CopyHeadersFromRequest { get; set; } = true;
+        public bool CopyHeadersFromResponse { get; set; } = true;
+        public string[] RequestHeadersNoCopy { get; set; }
+        public string[] ResponseHeadersNoCopy { get; set; }
+
         public Func<IFluentProxySettings, HttpClient> CreateHttpClient { get; set; }
         public Func<HttpClient, IFluentProxySettings, HttpClient> InitializeHttpClient { get; set; }
         public ILogger Logger { get; set; }

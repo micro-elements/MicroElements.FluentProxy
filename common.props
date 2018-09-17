@@ -4,10 +4,11 @@
     <Product>MicroElements.FluentProxy</Product>
     <Copyright>2018</Copyright>
     <Authors>micro-elements</Authors>
-    <PackageIconUrl></PackageIconUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/micro-elements/MicroElements/master/image/logo_rounded.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/micro-elements/MicroElements.FluentProxy</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/micro-elements/MicroElements.FluentProxy/master/LICENSE</PackageLicenseUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/micro-elements/MicroElements.FluentProxy</RepositoryUrl>
+    <Description>Simple http proxy to use in front of real services. Use it for tracing blackboxes and for mocking responses.</Description>
   </PropertyGroup>
 </Project>

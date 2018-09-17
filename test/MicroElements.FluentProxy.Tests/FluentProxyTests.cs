@@ -68,7 +68,7 @@ namespace MicroElements.FluentProxy.Tests
             var settings = new FluentProxySettings
             {
                 InternalPort = 5000,
-                ExternalUrl = "https://api.exmo.com",
+                ExternalUrl = "https://api.exmo.com/",
                 OnRequestFinished = message => fluentProxyLogMessage = message
             };
             var fluentProxyServer = await FluentProxyFactory.CreateServer(settings);

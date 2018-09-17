@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -36,34 +37,44 @@ namespace MicroElements.FluentProxy
             if (settings.InitializeHttpClient != null)
                 httpClient = settings.InitializeHttpClient(httpClient, settings);
 
-            string requestUri = httpContext.Request.GetEncodedPathAndQuery();
+            HttpRequest httpRequest = httpContext.Request;
+            HttpResponse httpResponse = httpContext.Response;
+
+            // Get result uri //todo: callback
+            string requestUri = httpRequest.GetEncodedPathAndQuery();
+            Uri externalUri = new Uri(settings.ExternalUrl);
+            Uri externalUriFull = new Uri(externalUri, requestUri);
 
             // Create http request
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(new HttpMethod(httpContext.Request.Method), requestUri);
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(new HttpMethod(httpRequest.Method), requestUri);
 
             // Copy headers to request
-            foreach (var requestHeader in httpContext.Request.Headers)
+            if (settings.CopyHeadersFromRequest)
             {
-                if (requestHeader.Key == "Host")
+                foreach (var requestHeader in httpRequest.Headers)
                 {
-                    // localhost leads to SSL error.
-                    continue;
+                    if (settings.RequestHeadersNoCopy != null && settings.RequestHeadersNoCopy.Contains(requestHeader.Key, StringComparer.InvariantCultureIgnoreCase))
+                        continue;
+                    if (!httpRequestMessage.Headers.TryAddWithoutValidation(requestHeader.Key, requestHeader.Value.ToArray()) && httpRequestMessage.Content != null)
+                    {
+                        httpRequestMessage.Content?.Headers.TryAddWithoutValidation(requestHeader.Key, requestHeader.Value.ToArray());
+                    }
                 }
-
-                httpRequestMessage.Headers.TryAddWithoutValidation(requestHeader.Key, requestHeader.Value.ToArray());
             }
 
+            httpRequestMessage.Headers.Host = externalUri.Authority;
+
             // Copy body to request
-            if (httpContext.Request.ContentLength.HasValue)
+            if (httpRequest.ContentLength.HasValue)
             {
-                httpRequestMessage.Content = new StreamContent(httpContext.Request.Body);
+                httpRequestMessage.Content = new StreamContent(httpRequest.Body);
             }
 
             var logMessage = new FluentProxyLogMessage
             {
                 RequestTime = DateTime.Now,
-                RequestUrl = requestUri,
-                RequestHeaders = httpContext.Request.Headers,
+                RequestUrl = externalUriFull.ToString(),
+                RequestHeaders = httpRequest.Headers,
                 RequestContent = null
             };
 
@@ -77,6 +88,7 @@ namespace MicroElements.FluentProxy
             }
 
             string responseText = null;
+
             if (settings.MockedResponse != null)
             {
                 responseText = settings.MockedResponse(requestUri);
@@ -92,18 +104,33 @@ namespace MicroElements.FluentProxy
                 logMessage.ResponseTime = DateTime.Now;
                 logMessage.ResponseContent = responseText;
 
+                httpResponse.StatusCode = (int)httpResponseMessage.StatusCode;
+                logMessage.StatusCode = (int)httpResponseMessage.StatusCode;
+
                 // Copy headers to response
-                foreach (var responseHeader in httpResponseMessage.Headers)
+                if (settings.CopyHeadersFromResponse)
                 {
-                    httpContext.Response.Headers.Add(responseHeader.Key, new StringValues(responseHeader.Value.ToArray()));
+                    foreach (var responseHeader in httpResponseMessage.Headers)
+                    {
+                        if (settings.ResponseHeadersNoCopy != null && settings.ResponseHeadersNoCopy.Contains(responseHeader.Key, StringComparer.InvariantCultureIgnoreCase))
+                            continue;
+
+                        httpResponse.Headers[responseHeader.Key] = responseHeader.Value.ToArray();
+                    }
+
+                    foreach (var responseHeader in httpResponseMessage.Content.Headers)
+                    {
+                        if (settings.ResponseHeadersNoCopy != null && settings.ResponseHeadersNoCopy.Contains(responseHeader.Key, StringComparer.InvariantCultureIgnoreCase))
+                            continue;
+
+                        httpResponse.Headers[responseHeader.Key] = responseHeader.Value.ToArray();
+                    }
                 }
 
-                logMessage.ResponseHeaders = httpContext.Response.Headers;
+                // SendAsync removes chunking from the response. This removes the header so it doesn't expect a chunked response.
+                httpResponse.Headers.Remove("transfer-encoding");
 
-                httpContext.Response.StatusCode = (int)httpResponseMessage.StatusCode;
-                httpContext.Response.ContentType = httpResponseMessage.Content.Headers.ContentType.ToString();
-
-                logMessage.StatusCode = (int)httpResponseMessage.StatusCode;
+                logMessage.ResponseHeaders = httpResponse.Headers;
             }
 
             try
@@ -115,7 +142,8 @@ namespace MicroElements.FluentProxy
                 _logger.LogWarning(e, "IFluentProxySettings.OnRequestFinished error.");
             }
 
-            await httpContext.Response.WriteAsync(responseText);
+            if (responseText != null)
+                await httpResponse.WriteAsync(responseText);
         }
 
         private HttpClient CreateHttpClient(IFluentProxySettings settings)

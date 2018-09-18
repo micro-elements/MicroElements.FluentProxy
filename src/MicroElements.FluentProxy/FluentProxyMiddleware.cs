@@ -71,7 +71,7 @@ namespace MicroElements.FluentProxy
             var logMessage = new FluentProxyLogMessage
             {
                 RequestTime = DateTime.Now,
-                RequestUrl = externalUriFull.ToString(),
+                RequestUrl = externalUriFull,
                 RequestHeaders = httpRequest.Headers,
                 RequestContent = null
             };
@@ -87,16 +87,19 @@ namespace MicroElements.FluentProxy
 
             try
             {
-                string responseText = null;
-
-                if (settings.MockedResponse != null)
+                if (settings.GetMockedResponse != null)
                 {
-                    responseText = settings.MockedResponse(requestUri);
-                    logMessage.ResponseTime = DateTime.Now;
-                    logMessage.ResponseContent = responseText;
+                    var mockedResponse = settings.GetMockedResponse(logMessage);
+                    if (mockedResponse.IsOk)
+                    {
+                        logMessage = mockedResponse;
+                        //responseText = mockedResponse.ResponseContent;
+                        //logMessage.ResponseTime = DateTime.Now;
+                        //logMessage.ResponseContent = responseText;
+                    }
                 }
 
-                if (responseText == null)
+                if (logMessage.ResponseContent == null)
                 {
                     // Invoke real http request
                     HttpResponseMessage httpResponseMessage = await httpClient.SendAsync(httpRequestMessage);
@@ -130,7 +133,7 @@ namespace MicroElements.FluentProxy
                     logMessage.ResponseHeaders = httpResponse.Headers;
 
                     // Read content
-                    responseText = await httpResponseMessage.Content.ReadAsStringAsync();
+                    string responseText = await httpResponseMessage.Content.ReadAsStringAsync();
                     logMessage.ResponseTime = DateTime.Now;
                     logMessage.ResponseContent = responseText;
 

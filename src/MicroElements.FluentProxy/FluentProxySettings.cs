@@ -1,6 +1,5 @@
 using System;
 using System.Net.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace MicroElements.FluentProxy
@@ -26,7 +25,7 @@ namespace MicroElements.FluentProxy
         public Action<FluentProxyLogMessage> OnRequestStarted { get; set; }
         public Action<FluentProxyLogMessage> OnRequestFinished { get; set; }
 
-        public Func<string, string> MockedResponse { get; set; }
+        public Func<FluentProxyLogMessage, FluentProxyLogMessage> GetMockedResponse { get; set; }
 
         public FluentProxySettings()
         {
@@ -43,21 +42,7 @@ namespace MicroElements.FluentProxy
             Logger = settings.Logger;
             OnRequestStarted = settings.OnRequestStarted;
             OnRequestFinished = settings.OnRequestFinished;
-            MockedResponse = settings.MockedResponse;
+            GetMockedResponse = settings.GetMockedResponse;
         }
-    }
-
-    public class FluentProxyLogMessage
-    {
-        public DateTime RequestTime;
-        public string RequestUrl;
-        public string RequestContent;
-        public IHeaderDictionary RequestHeaders;
-
-        public DateTime ResponseTime;
-        public int StatusCode;
-        public Exception Exception;
-        public string ResponseContent;
-        public IHeaderDictionary ResponseHeaders;
     }
 }

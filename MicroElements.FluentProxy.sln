@@ -11,9 +11,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{16B525AB-8
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroElements.FluentProxy.Tests", "test\MicroElements.FluentProxy.Tests\MicroElements.FluentProxy.Tests.csproj", "{A7CFFC00-CFD0-4A2D-9AA6-CDB6ECFEF9B0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentProxySample", "samples\FluentProxySample\FluentProxySample.csproj", "{808CA6D7-F428-4E18-82D0-5F0AB284C563}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluentProxySample", "samples\FluentProxySample\FluentProxySample.csproj", "{808CA6D7-F428-4E18-82D0-5F0AB284C563}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{9DA85EAC-F1C8-4A0B-8655-5FDEE72295E0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{13FDC8BB-0BDD-4A87-A04C-A79E46DCA1EE}"
+	ProjectSection(SolutionItems) = preProject
+		CHANGELOG.md = CHANGELOG.md
+		common.props = common.props
+		README.md = README.md
+		version.props = version.props
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

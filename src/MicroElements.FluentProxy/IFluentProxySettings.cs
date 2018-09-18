@@ -36,6 +36,6 @@ namespace MicroElements.FluentProxy
         ILogger Logger { get; }
         Action<FluentProxyLogMessage> OnRequestStarted { get; set; }
         Action<FluentProxyLogMessage> OnRequestFinished { get; set; }
-        Func<string, string> MockedResponse { get; set; }
+        Func<FluentProxyLogMessage, FluentProxyLogMessage> GetMockedResponse { get; set; }
     }
 }

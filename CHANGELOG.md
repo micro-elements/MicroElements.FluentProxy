@@ -1,3 +1,6 @@
+# 0.3.0
+- GetMockedResponse works now with FluentProxyLogMessage
+
 # 0.2.1
 - bugfixes
 

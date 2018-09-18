@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -7,7 +6,6 @@ using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Primitives;
 
 namespace MicroElements.FluentProxy
 {
@@ -87,63 +85,76 @@ namespace MicroElements.FluentProxy
                 _logger.LogWarning(e, "IFluentProxySettings.OnRequestStarted error.");
             }
 
-            string responseText = null;
-
-            if (settings.MockedResponse != null)
-            {
-                responseText = settings.MockedResponse(requestUri);
-                logMessage.ResponseTime = DateTime.Now;
-                logMessage.ResponseContent = responseText;
-            }
-
-            if (responseText == null)
-            {
-                // Invoke real http request
-                HttpResponseMessage httpResponseMessage = await httpClient.SendAsync(httpRequestMessage);
-                responseText = await httpResponseMessage.Content.ReadAsStringAsync();
-                logMessage.ResponseTime = DateTime.Now;
-                logMessage.ResponseContent = responseText;
-
-                httpResponse.StatusCode = (int)httpResponseMessage.StatusCode;
-                logMessage.StatusCode = (int)httpResponseMessage.StatusCode;
-
-                // Copy headers to response
-                if (settings.CopyHeadersFromResponse)
-                {
-                    foreach (var responseHeader in httpResponseMessage.Headers)
-                    {
-                        if (settings.ResponseHeadersNoCopy != null && settings.ResponseHeadersNoCopy.Contains(responseHeader.Key, StringComparer.InvariantCultureIgnoreCase))
-                            continue;
-
-                        httpResponse.Headers[responseHeader.Key] = responseHeader.Value.ToArray();
-                    }
-
-                    foreach (var responseHeader in httpResponseMessage.Content.Headers)
-                    {
-                        if (settings.ResponseHeadersNoCopy != null && settings.ResponseHeadersNoCopy.Contains(responseHeader.Key, StringComparer.InvariantCultureIgnoreCase))
-                            continue;
-
-                        httpResponse.Headers[responseHeader.Key] = responseHeader.Value.ToArray();
-                    }
-                }
-
-                // SendAsync removes chunking from the response. This removes the header so it doesn't expect a chunked response.
-                httpResponse.Headers.Remove("transfer-encoding");
-
-                logMessage.ResponseHeaders = httpResponse.Headers;
-            }
-
             try
             {
-                settings.OnRequestFinished?.Invoke(logMessage);
+                string responseText = null;
+
+                if (settings.MockedResponse != null)
+                {
+                    responseText = settings.MockedResponse(requestUri);
+                    logMessage.ResponseTime = DateTime.Now;
+                    logMessage.ResponseContent = responseText;
+                }
+
+                if (responseText == null)
+                {
+                    // Invoke real http request
+                    HttpResponseMessage httpResponseMessage = await httpClient.SendAsync(httpRequestMessage);
+
+                    httpResponse.StatusCode = (int)httpResponseMessage.StatusCode;
+                    logMessage.StatusCode = (int)httpResponseMessage.StatusCode;
+
+                    // Copy headers to response
+                    if (settings.CopyHeadersFromResponse)
+                    {
+                        foreach (var responseHeader in httpResponseMessage.Headers)
+                        {
+                            if (settings.ResponseHeadersNoCopy != null && settings.ResponseHeadersNoCopy.Contains(responseHeader.Key, StringComparer.InvariantCultureIgnoreCase))
+                                continue;
+
+                            httpResponse.Headers[responseHeader.Key] = responseHeader.Value.ToArray();
+                        }
+
+                        foreach (var responseHeader in httpResponseMessage.Content.Headers)
+                        {
+                            if (settings.ResponseHeadersNoCopy != null && settings.ResponseHeadersNoCopy.Contains(responseHeader.Key, StringComparer.InvariantCultureIgnoreCase))
+                                continue;
+
+                            httpResponse.Headers[responseHeader.Key] = responseHeader.Value.ToArray();
+                        }
+                    }
+
+                    // SendAsync removes chunking from the response. This removes the header so it doesn't expect a chunked response.
+                    httpResponse.Headers.Remove("transfer-encoding");
+
+                    logMessage.ResponseHeaders = httpResponse.Headers;
+
+                    // Read content
+                    responseText = await httpResponseMessage.Content.ReadAsStringAsync();
+                    logMessage.ResponseTime = DateTime.Now;
+                    logMessage.ResponseContent = responseText;
+
+                    if (responseText != null)
+                        await httpResponse.WriteAsync(responseText);
+                }
             }
             catch (Exception e)
             {
-                _logger.LogWarning(e, "IFluentProxySettings.OnRequestFinished error.");
+                logMessage.Exception = e;
+                _logger.LogError(e, "Error in request processing.");
+                throw;
             }
-
-            if (responseText != null)
-                await httpResponse.WriteAsync(responseText);
+            finally
+            {
+                try
+                {
+                    settings.OnRequestFinished?.Invoke(logMessage);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogWarning(e, "IFluentProxySettings.OnRequestFinished error.");
+                }
+            }
         }
 
         private HttpClient CreateHttpClient(IFluentProxySettings settings)

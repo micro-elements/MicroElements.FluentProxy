@@ -1,3 +1,6 @@
+# 0.2.1
+- bugfixes
+
 # 0.2.0
 - Extended settings and request processing
 

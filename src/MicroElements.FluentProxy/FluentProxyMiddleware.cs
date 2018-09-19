@@ -91,17 +91,14 @@ namespace MicroElements.FluentProxy
 
             try
             {
-                if (settings.GetCachedResponse != null)
+                // Get response from cache
+                var cachedResponse = settings.GetCachedResponse?.Invoke(session);
+                if (cachedResponse != null && cachedResponse.IsOk)
                 {
-                    var mockedResponse = settings.GetCachedResponse(session);
-                    if (mockedResponse.IsOk)
-                    {
-                        session.ResponseData = mockedResponse;
-                        session.ResponseSource = ResponseSource.Cache;
-                    }
+                    session.ResponseData = cachedResponse;
+                    session.ResponseSource = ResponseSource.Cache;
                 }
-
-                if (session.ResponseData == null)
+                else
                 {
                     // Invoke real http request
                     HttpResponseMessage httpResponseMessage = await httpClient.SendAsync(httpRequestMessage);

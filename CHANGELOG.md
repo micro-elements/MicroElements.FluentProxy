@@ -1,5 +1,10 @@
+# 0.4.0
+- `FluentProxyLogMessage` splitted to `RequestSession` and `ResponseData`
+- `GetMockedResponse` renamed to `GetCachedResponse` and returns `ResponseData`
+- Added ids to `RequestSession` and `ResponseData`
+
 # 0.3.0
-- GetMockedResponse works now with FluentProxyLogMessage
+- `GetMockedResponse` works now with `FluentProxyLogMessage`
 
 # 0.2.1
 - bugfixes

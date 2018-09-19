@@ -2,13 +2,14 @@
   <Import Project="version.props" />
   <PropertyGroup>
     <Product>MicroElements.FluentProxy</Product>
-    <Copyright>2018</Copyright>
-    <Authors>micro-elements</Authors>
+    <Copyright>Alexey Petryashev 2018</Copyright>
+    <Authors>alexey.petriashev;MicroElements</Authors>
     <PackageIconUrl>https://raw.githubusercontent.com/micro-elements/MicroElements/master/image/logo_rounded.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/micro-elements/MicroElements.FluentProxy</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/micro-elements/MicroElements.FluentProxy/master/LICENSE</PackageLicenseUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/micro-elements/MicroElements.FluentProxy</RepositoryUrl>
     <Description>Simple http proxy to use in front of real services. Use it for tracing blackboxes and for mocking responses.</Description>
+    <PackageTags>aspnetcore proxy http mock wiremock http cache httpcache tracing</PackageTags>
   </PropertyGroup>
 </Project>

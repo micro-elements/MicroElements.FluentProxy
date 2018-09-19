@@ -64,12 +64,12 @@ namespace MicroElements.FluentProxy.Tests
         [Fact]
         public async Task Stub()
         {
-            FluentProxyLogMessage fluentProxyLogMessage;
+            RequestSession requestSession;
             var settings = new FluentProxySettings
             {
                 InternalPort = 5000,
                 ExternalUrl = "https://api.exmo.com/",
-                OnRequestFinished = message => fluentProxyLogMessage = message
+                OnRequestFinished = message => requestSession = message
             };
             var fluentProxyServer = await FluentProxyFactory.CreateServer(settings);
             

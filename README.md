@@ -1,6 +1,8 @@
 # MicroElements.FluentProxy
 Simple http proxy to use in front of real services. Use it for tracing blackboxes and for mocking responses.
 
+WARNING: version before 1.0.0 has unstable API. After stabilizing this warning will be removed!
+
 ## Statuses
 [![License](https://img.shields.io/github/license/micro-elements/MicroElements.FluentProxy.svg)](https://raw.githubusercontent.com/micro-elements/MicroElements.FluentProxy/master/LICENSE)
 [![NuGetVersion](https://img.shields.io/nuget/v/MicroElements.FluentProxy.svg)](https://www.nuget.org/packages/MicroElements.FluentProxy)

@@ -7,7 +7,6 @@ namespace MicroElements.FluentProxy
     public class FluentProxySettings : IFluentProxySettings
     {
         public int InternalPort { get; set; }
-        
 
         public string ExternalUrl { get; set; }
         public TimeSpan? Timeout { get; set; }
@@ -22,16 +21,15 @@ namespace MicroElements.FluentProxy
         public Func<HttpClient, IFluentProxySettings, HttpClient> InitializeHttpClient { get; set; }
         public ILogger Logger { get; set; }
 
-        public Action<FluentProxyLogMessage> OnRequestStarted { get; set; }
-        public Action<FluentProxyLogMessage> OnRequestFinished { get; set; }
+        public Action<RequestSession> OnRequestStarted { get; set; }
+        public Action<RequestSession> OnRequestFinished { get; set; }
 
-        public Func<FluentProxyLogMessage, FluentProxyLogMessage> GetMockedResponse { get; set; }
+        public Func<RequestSession, ResponseData> GetCachedResponse { get; set; }
 
         public FluentProxySettings()
         {
         }
 
-        //todo: test
         public FluentProxySettings(IFluentProxySettings settings)
         {
             InternalPort = settings.InternalPort;
@@ -42,7 +40,7 @@ namespace MicroElements.FluentProxy
             Logger = settings.Logger;
             OnRequestStarted = settings.OnRequestStarted;
             OnRequestFinished = settings.OnRequestFinished;
-            GetMockedResponse = settings.GetMockedResponse;
+            GetCachedResponse = settings.GetCachedResponse;
         }
     }
 }

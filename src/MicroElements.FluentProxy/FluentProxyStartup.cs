@@ -15,6 +15,8 @@ namespace MicroElements.FluentProxy
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddHttpClient();
+            // services.AddHttpClient("FluentProxy").ConfigureHttpMessageHandlerBuilder(builder => builder.PrimaryHandler = null);
+            // todo: ConfigureHttpMessageHandlerBuilder
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -34,8 +34,8 @@ namespace MicroElements.FluentProxy
         Func<IFluentProxySettings, HttpClient> CreateHttpClient { get; }
         Func<HttpClient, IFluentProxySettings, HttpClient> InitializeHttpClient { get; }
         ILogger Logger { get; }
-        Action<FluentProxyLogMessage> OnRequestStarted { get; set; }
-        Action<FluentProxyLogMessage> OnRequestFinished { get; set; }
-        Func<FluentProxyLogMessage, FluentProxyLogMessage> GetMockedResponse { get; set; }
+        Action<RequestSession> OnRequestStarted { get; set; }
+        Action<RequestSession> OnRequestFinished { get; set; }
+        Func<RequestSession, ResponseData> GetCachedResponse { get; set; }
     }
 }

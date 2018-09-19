@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
@@ -43,10 +44,21 @@ namespace MicroElements.FluentProxy
             Uri externalUri = new Uri(settings.ExternalUrl);
             Uri externalUriFull = new Uri(externalUri, requestUri);
 
+            var session = new RequestSession
+            {
+                RequestId = Guid.NewGuid().ToString(), // httpContext.TraceIdentifier?
+                RequestTime = DateTime.Now,
+                RequestUrl = externalUriFull,
+                RequestHeaders = httpRequest.Headers,
+                RequestContent = null,
+            };
+
+            httpContext.Items["FluentProxySession"] = session;
+
             // Create http request
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(new HttpMethod(httpRequest.Method), requestUri);
 
-            // Copy headers to request
+            // Fill request headers
             if (settings.CopyHeadersFromRequest)
             {
                 foreach (var requestHeader in httpRequest.Headers)
@@ -62,23 +74,15 @@ namespace MicroElements.FluentProxy
 
             httpRequestMessage.Headers.Host = externalUri.Authority;
 
-            // Copy body to request
+            // Fill request body
             if (httpRequest.ContentLength.HasValue)
             {
                 httpRequestMessage.Content = new StreamContent(httpRequest.Body);
             }
 
-            var logMessage = new FluentProxyLogMessage
-            {
-                RequestTime = DateTime.Now,
-                RequestUrl = externalUriFull,
-                RequestHeaders = httpRequest.Headers,
-                RequestContent = null
-            };
-
             try
             {
-                settings.OnRequestStarted?.Invoke(logMessage);
+                settings.OnRequestStarted?.Invoke(session);
             }
             catch (Exception e)
             {
@@ -87,27 +91,31 @@ namespace MicroElements.FluentProxy
 
             try
             {
-                if (settings.GetMockedResponse != null)
+                if (settings.GetCachedResponse != null)
                 {
-                    var mockedResponse = settings.GetMockedResponse(logMessage);
+                    var mockedResponse = settings.GetCachedResponse(session);
                     if (mockedResponse.IsOk)
                     {
-                        logMessage = mockedResponse;
-                        //responseText = mockedResponse.ResponseContent;
-                        //logMessage.ResponseTime = DateTime.Now;
-                        //logMessage.ResponseContent = responseText;
+                        session.ResponseData = mockedResponse;
+                        session.ResponseSource = ResponseSource.Cache;
                     }
                 }
 
-                if (logMessage.ResponseContent == null)
+                if (session.ResponseData == null)
                 {
                     // Invoke real http request
                     HttpResponseMessage httpResponseMessage = await httpClient.SendAsync(httpRequestMessage);
 
-                    httpResponse.StatusCode = (int)httpResponseMessage.StatusCode;
-                    logMessage.StatusCode = (int)httpResponseMessage.StatusCode;
+                    var response = new ResponseData
+                    {
+                        RequestId = session.RequestId,
+                        ResponseId = Guid.NewGuid().ToString(),
+                        StatusCode = (int)httpResponseMessage.StatusCode,
+                    };
 
-                    // Copy headers to response
+                    httpResponse.StatusCode = response.StatusCode;
+
+                    // Fill response headers
                     if (settings.CopyHeadersFromResponse)
                     {
                         foreach (var responseHeader in httpResponseMessage.Headers)
@@ -130,28 +138,36 @@ namespace MicroElements.FluentProxy
                     // SendAsync removes chunking from the response. This removes the header so it doesn't expect a chunked response.
                     httpResponse.Headers.Remove("transfer-encoding");
 
-                    logMessage.ResponseHeaders = httpResponse.Headers;
+                    response.ResponseHeaders = httpResponse.Headers;
 
                     // Read content
                     string responseText = await httpResponseMessage.Content.ReadAsStringAsync();
-                    logMessage.ResponseTime = DateTime.Now;
-                    logMessage.ResponseContent = responseText;
-
-                    if (responseText != null)
-                        await httpResponse.WriteAsync(responseText);
+                    response.ResponseTime = DateTime.Now;
+                    response.ResponseContent = responseText;
+                    session.ResponseData = response;
+                    session.ResponseSource = ResponseSource.HttpResponse;
                 }
+
+                // Write response content
+                if (session.ResponseContent != null)
+                    await httpResponse.WriteAsync(session.ResponseContent);
+
             }
             catch (Exception e)
             {
-                logMessage.Exception = e;
                 _logger.LogError(e, "Error in request processing.");
-                throw;
+                httpResponse.StatusCode = (int)HttpStatusCode.InternalServerError;
+
+                if (session.ResponseData == null)
+                    session.ResponseData = new ResponseData();
+                session.ResponseData.Exception = e;
+                session.ResponseData.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
             finally
             {
                 try
                 {
-                    settings.OnRequestFinished?.Invoke(logMessage);
+                    settings.OnRequestFinished?.Invoke(session);
                 }
                 catch (Exception e)
                 {

@@ -17,19 +17,13 @@ namespace MicroElements.FluentProxy
         public ResponseData ResponseData { get; set; }
         public ResponseSource ResponseSource { get; set; }
 
-        public DateTime ResponseTime => ResponseData.ResponseTime;
-        public int StatusCode => ResponseData.StatusCode;
-        public Exception Exception => ResponseData.Exception;
-        public string ResponseContent => ResponseData.ResponseContent;
-        public IHeaderDictionary ResponseHeaders => ResponseData.ResponseHeaders;
-
-        public TimeSpan Duration => ResponseTime - RequestTime;
+        public TimeSpan Duration => ResponseData.ResponseTime - RequestTime;
         public bool IsOk => ResponseData?.IsOk ?? false;
 
         /// <inheritdoc />
         public override string ToString()
         {
-            return $"{nameof(RequestTime)}: {RequestTime:s}, {nameof(RequestUrl)}: {RequestUrl}, {nameof(StatusCode)}: {StatusCode}";
+            return $"{nameof(RequestTime)}: {RequestTime:s}, {nameof(RequestUrl)}: {RequestUrl}, {nameof(ResponseData.StatusCode)}: {ResponseData.StatusCode}";
         }
     }
 
@@ -50,6 +44,6 @@ namespace MicroElements.FluentProxy
         public string ResponseContent { get; set; }
         public IHeaderDictionary ResponseHeaders { get; set; }
 
-        public bool IsOk => StatusCode == 200 && Exception != null;
+        public bool IsOk => StatusCode == 200 && Exception == null;
     }
 }

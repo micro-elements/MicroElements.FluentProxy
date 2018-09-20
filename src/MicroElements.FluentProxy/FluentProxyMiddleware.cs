@@ -146,8 +146,8 @@ namespace MicroElements.FluentProxy
                 }
 
                 // Write response content
-                if (session.ResponseContent != null)
-                    await httpResponse.WriteAsync(session.ResponseContent);
+                if (session.ResponseData.ResponseContent != null)
+                    await httpResponse.WriteAsync(session.ResponseData.ResponseContent);
 
             }
             catch (Exception e)

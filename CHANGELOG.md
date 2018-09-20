@@ -1,3 +1,7 @@
+# 0.5.0
+- bugfixes
+- Removed properties from RequestSession in favor of ResponseData
+
 # 0.4.0
 - `FluentProxyLogMessage` splitted to `RequestSession` and `ResponseData`
 - `GetMockedResponse` renamed to `GetCachedResponse` and returns `ResponseData`

@@ -6,12 +6,14 @@ namespace MicroElements.FluentProxy
     /// <summary>
     /// Detailed info about one request-response session.
     /// </summary>
+    /// todo: comments
     public class RequestSession
     {
         public string RequestId { get; set; }
         public DateTime RequestTime { get; set; }
         public Uri RequestUrl { get; set; }
         public string RequestContent { get; set; }
+        //todo: to dic<string,string>
         public IHeaderDictionary RequestHeaders { get; set; }
 
         public ResponseData ResponseData { get; set; }

@@ -33,16 +33,27 @@ namespace MicroElements.FluentProxy
         {
             HttpClient httpClient = settings.CreateHttpClient != null ? settings.CreateHttpClient(settings) : CreateHttpClient(settings);
 
+            if (settings.Timeout.HasValue)
+                httpClient.Timeout = settings.Timeout.Value;
+
             if (settings.InitializeHttpClient != null)
                 httpClient = settings.InitializeHttpClient(httpClient, settings);
 
             HttpRequest httpRequest = httpContext.Request;
             HttpResponse httpResponse = httpContext.Response;
 
-            // Get result uri //todo: callback
-            string requestUri = httpRequest.GetEncodedPathAndQuery();
-            Uri externalUri = new Uri(settings.ExternalUrl);
-            Uri externalUriFull = new Uri(externalUri, requestUri);
+            // Get full external Url
+            Uri externalUriFull;
+            string requestPathAndQuery = httpRequest.GetEncodedPathAndQuery();
+            if (settings.GetRequestUrl != null)
+            {
+                // todo: use its value?
+                externalUriFull = settings.GetRequestUrl(settings, httpRequest);
+            }
+            else
+            {
+                externalUriFull = new Uri(settings.ExternalUrl, requestPathAndQuery);
+            }
 
             var session = new RequestSession
             {
@@ -50,13 +61,14 @@ namespace MicroElements.FluentProxy
                 RequestTime = DateTime.Now,
                 RequestUrl = externalUriFull,
                 RequestHeaders = httpRequest.Headers,
-                RequestContent = null,
+                RequestContent = null,//todo: read and rewind content if set in settings
             };
 
+            // todo: to docs
             httpContext.Items["FluentProxySession"] = session;
 
             // Create http request
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(new HttpMethod(httpRequest.Method), requestUri);
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(new HttpMethod(httpRequest.Method), requestPathAndQuery);
 
             // Fill request headers
             if (settings.CopyHeadersFromRequest)
@@ -72,7 +84,7 @@ namespace MicroElements.FluentProxy
                 }
             }
 
-            httpRequestMessage.Headers.Host = externalUri.Authority;
+            httpRequestMessage.Headers.Host = settings.ExternalUrl.Authority;
 
             // Fill request body
             if (httpRequest.ContentLength.HasValue)
@@ -175,11 +187,9 @@ namespace MicroElements.FluentProxy
 
         private HttpClient CreateHttpClient(IFluentProxySettings settings)
         {
-            HttpClient httpClient = _httpClientFactory.CreateClient(settings.ExternalUrl);
+            HttpClient httpClient = _httpClientFactory.CreateClient(settings.ExternalUrl.Authority);
 
-            httpClient.BaseAddress = new Uri(settings.ExternalUrl);
-            if (settings.Timeout.HasValue)
-                httpClient.Timeout = settings.Timeout.Value;
+            httpClient.BaseAddress = settings.ExternalUrl;
 
             return httpClient;
         }

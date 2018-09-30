@@ -7,31 +7,43 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MicroElements.FluentProxy
 {
+    /// <summary>
+    /// Proxy factory.
+    /// </summary>
     public class FluentProxyFactory : IFluentProxyFactory
     {
         private readonly ConcurrentDictionary<string, Task<FluentProxyServer>> _webHosts = new ConcurrentDictionary<string, Task<FluentProxyServer>>();
 
+        /// <summary>
+        /// Creates and starts proxy server.
+        /// </summary>
+        /// <param name="settings">Settings.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Task representing asynchronous operation.</returns>
         public Task<FluentProxyServer> CreateServer(IFluentProxySettings settings, CancellationToken cancellationToken = default)
         {
-            string serverKey = $"{new Uri(settings.ExternalUrl).Authority};{settings.InternalPort}";
-            return _webHosts.GetOrAdd(serverKey, url => CreateServerInternal(settings, cancellationToken));
+            // Server key before port evaluation. That means that same url and undefined port returns same servers.
+            string serverKey = ServerKey(settings);
+
+            int internalPort = settings.InternalPort;
+            if (internalPort <= 0)
+                internalPort = TcpUtils.FindFreeTcpPort();
+
+            // Recreate with port and proxyUrl
+            settings = new FluentProxySettings(settings)
+            {
+                InternalPort = internalPort,
+                ProxyUrl = new UriBuilder("http", "localhost", internalPort, settings.ExternalUrl.PathAndQuery).Uri,
+            };
+
+            return _webHosts.GetOrAdd(serverKey, url => CreateServerInternal(settings, serverKey, cancellationToken));
         }
 
-        private async Task<FluentProxyServer> CreateServerInternal(IFluentProxySettings settings, CancellationToken cancellationToken)
+        private async Task<FluentProxyServer> CreateServerInternal(IFluentProxySettings settings, string serverKey, CancellationToken cancellationToken)
         {
-            if (settings.InternalPort <= 0)
-            {
-                settings = new FluentProxySettings(settings) { InternalPort = TcpUtils.FindFreeTcpPort() };
-            }
-            if (settings.Logger == null)
-            {
-                settings = new FluentProxySettings(settings) { Logger = NullLogger.Instance };
-            }
-
             IWebHost webHost = new WebHostBuilder()
                 .UseKestrel()
                 .UseUrls($"http://localhost:{settings.InternalPort}")
@@ -39,8 +51,10 @@ namespace MicroElements.FluentProxy
                 .UseStartup<FluentProxyStartup>()
                 .Build();
             await webHost.StartAsync(cancellationToken);
-            string serverKey = $"{settings.ExternalUrl};{settings.InternalPort}";
+
             return new FluentProxyServer(settings, webHost, () => _webHosts.TryRemove(serverKey, out _));
         }
+
+        private string ServerKey(IFluentProxySettings settings) => $"{settings.ExternalUrl.AbsoluteUri};{settings.InternalPort}";
     }
 }

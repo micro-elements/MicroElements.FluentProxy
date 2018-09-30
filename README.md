@@ -23,6 +23,30 @@ WARNING: version before 1.0.0 has unstable API. After stabilizing this warning w
 dotnet add package MicroElements.FluentProxy
 ```
 
+## Usage
+
+```csharp
+var settings = new FluentProxySettings
+{
+    ExternalUrl = new Uri("https://api.github.com"),
+    OnRequestFinished = session =>
+    {
+        Console.WriteLine(session.RequestUrl);
+        Console.WriteLine(session.ResponseData.ResponseContent);
+    }
+};
+FluentProxyServer fluentProxyServer = await FluentProxyFactory.CreateServer(settings);
+
+var request = new HttpRequestMessage(HttpMethod.Get, "/repos/aspnet/docs/branches");
+request.Headers.Add("Accept", "application/vnd.github.v3+json");
+request.Headers.Add("User-Agent", "HttpClientFactory-Sample");
+
+HttpClient httpClient = fluentProxyServer.GetHttpClient();
+
+var httpResponseMessage = await httpClient.SendAsync(request);
+var response = await httpResponseMessage.Content.ReadAsStringAsync();
+```
+
 ## Build
 Windows: Run `build.ps1`
 

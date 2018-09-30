@@ -1,3 +1,8 @@
+# 0.6.0
+- Changed: ExternalUrl changed type to Uri
+- Added ProxyUrl: Uri
+- Added comments and minor fixes
+
 # 0.5.0
 - bugfixes
 - Removed properties from RequestSession in favor of ResponseData

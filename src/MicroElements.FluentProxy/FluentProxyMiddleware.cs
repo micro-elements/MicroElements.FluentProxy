@@ -103,19 +103,38 @@ namespace MicroElements.FluentProxy
 
             try
             {
+                ResponseData response = null;
                 // Get response from cache
                 var cachedResponse = settings.GetCachedResponse?.Invoke(session);
                 if (cachedResponse != null && cachedResponse.IsOk)
                 {
+                    response = cachedResponse;
                     session.ResponseData = cachedResponse;
                     session.ResponseSource = ResponseSource.Cache;
+
+                    httpResponse.StatusCode = response.StatusCode;
+
+                    // Fill response headers
+                    if (settings.CopyHeadersFromResponse)
+                    {
+                        foreach (var responseHeader in cachedResponse.ResponseHeaders)
+                        {
+                            if (settings.ResponseHeadersNoCopy != null && settings.ResponseHeadersNoCopy.Contains(responseHeader.Key, StringComparer.InvariantCultureIgnoreCase))
+                                continue;
+
+                            httpResponse.Headers[responseHeader.Key] = responseHeader.Value.ToArray();
+                        }
+                    }
+
+                    // SendAsync removes chunking from the response. This removes the header so it doesn't expect a chunked response.
+                    httpResponse.Headers.Remove("transfer-encoding");
                 }
                 else
                 {
                     // Invoke real http request
                     HttpResponseMessage httpResponseMessage = await httpClient.SendAsync(httpRequestMessage);
 
-                    var response = new ResponseData
+                    response = new ResponseData
                     {
                         RequestId = session.RequestId,
                         ResponseId = Guid.NewGuid().ToString(),

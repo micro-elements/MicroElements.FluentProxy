@@ -1,3 +1,6 @@
+# 0.6.1
+- Fixed: Copy headers to response from cached data
+
 # 0.6.0
 - Changed: ExternalUrl changed type to Uri
 - Added ProxyUrl: Uri

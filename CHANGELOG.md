@@ -1,3 +1,6 @@
+# 0.7.0
+- Change: Headers in RequestSession and ResponseData changed type to Dictionary because AspNetCore clears cached IHeaderDictionary
+
 # 0.6.1
 - Fixed: Copy headers to response from cached data
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
 
 namespace MicroElements.FluentProxy
@@ -14,7 +15,7 @@ namespace MicroElements.FluentProxy
         public Uri RequestUrl { get; set; }
         public string RequestContent { get; set; }
         //todo: to dic<string,string>
-        public IHeaderDictionary RequestHeaders { get; set; }
+        public IDictionary<string, string> RequestHeaders { get; set; }
 
         public ResponseData ResponseData { get; set; }
         public ResponseSource ResponseSource { get; set; }
@@ -44,7 +45,7 @@ namespace MicroElements.FluentProxy
         public int StatusCode { get; set; }
         public Exception Exception { get; set; }
         public string ResponseContent { get; set; }
-        public IHeaderDictionary ResponseHeaders { get; set; }
+        public IDictionary<string, string> ResponseHeaders { get; set; }
 
         public bool IsOk => StatusCode == 200 && Exception == null;
     }

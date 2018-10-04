@@ -57,10 +57,10 @@ namespace MicroElements.FluentProxy
 
             var session = new RequestSession
             {
-                RequestId = Guid.NewGuid().ToString(), // httpContext.TraceIdentifier?
+                RequestId = Guid.NewGuid().ToString(), // httpContext.TraceIdentifier? // todo external ID
                 RequestTime = DateTime.Now,
                 RequestUrl = externalUriFull,
-                RequestHeaders = httpRequest.Headers,
+                RequestHeaders = httpRequest.Headers.ToDictionary(pair => pair.Key, pair => pair.Value.ToString()),
                 RequestContent = null,//todo: read and rewind content if set in settings
             };
 
@@ -103,26 +103,24 @@ namespace MicroElements.FluentProxy
 
             try
             {
-                ResponseData response = null;
-                // Get response from cache
-                var cachedResponse = settings.GetCachedResponse?.Invoke(session);
-                if (cachedResponse != null && cachedResponse.IsOk)
+                // Try get response from cache
+                ResponseData responseData = settings.GetCachedResponse?.Invoke(session);
+                if (responseData != null && responseData.IsOk)
                 {
-                    response = cachedResponse;
-                    session.ResponseData = cachedResponse;
+                    session.ResponseData = responseData;
                     session.ResponseSource = ResponseSource.Cache;
 
-                    httpResponse.StatusCode = response.StatusCode;
+                    httpResponse.StatusCode = responseData.StatusCode;
 
                     // Fill response headers
                     if (settings.CopyHeadersFromResponse)
                     {
-                        foreach (var responseHeader in cachedResponse.ResponseHeaders)
+                        foreach (var responseHeader in responseData.ResponseHeaders)
                         {
                             if (settings.ResponseHeadersNoCopy != null && settings.ResponseHeadersNoCopy.Contains(responseHeader.Key, StringComparer.InvariantCultureIgnoreCase))
                                 continue;
 
-                            httpResponse.Headers[responseHeader.Key] = responseHeader.Value.ToArray();
+                            httpResponse.Headers[responseHeader.Key] = responseHeader.Value;
                         }
                     }
 
@@ -134,14 +132,14 @@ namespace MicroElements.FluentProxy
                     // Invoke real http request
                     HttpResponseMessage httpResponseMessage = await httpClient.SendAsync(httpRequestMessage);
 
-                    response = new ResponseData
+                    responseData = new ResponseData
                     {
                         RequestId = session.RequestId,
                         ResponseId = Guid.NewGuid().ToString(),
                         StatusCode = (int)httpResponseMessage.StatusCode,
                     };
 
-                    httpResponse.StatusCode = response.StatusCode;
+                    httpResponse.StatusCode = responseData.StatusCode;
 
                     // Fill response headers
                     if (settings.CopyHeadersFromResponse)
@@ -166,13 +164,14 @@ namespace MicroElements.FluentProxy
                     // SendAsync removes chunking from the response. This removes the header so it doesn't expect a chunked response.
                     httpResponse.Headers.Remove("transfer-encoding");
 
-                    response.ResponseHeaders = httpResponse.Headers;
+                    // Fill headers
+                    responseData.ResponseHeaders = httpResponse.Headers.ToDictionary(pair => pair.Key, pair => pair.Value.ToString());
 
                     // Read content
                     string responseText = await httpResponseMessage.Content.ReadAsStringAsync();
-                    response.ResponseTime = DateTime.Now;
-                    response.ResponseContent = responseText;
-                    session.ResponseData = response;
+                    responseData.ResponseTime = DateTime.Now;
+                    responseData.ResponseContent = responseText;
+                    session.ResponseData = responseData;
                     session.ResponseSource = ResponseSource.HttpResponse;
                 }
 
@@ -202,6 +201,8 @@ namespace MicroElements.FluentProxy
                     _logger.LogWarning(e, "IFluentProxySettings.OnRequestFinished error.");
                 }
             }
+
+            await _next(httpContext);
         }
 
         private HttpClient CreateHttpClient(IFluentProxySettings settings)

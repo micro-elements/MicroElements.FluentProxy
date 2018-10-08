@@ -1,3 +1,6 @@
+# 0.7.1
+- Fixed : StatusCode cannot be set because the response has already started.
+ 
 # 0.7.0
 - Change: Headers in RequestSession and ResponseData changed type to Dictionary because AspNetCore clears cached IHeaderDictionary
 

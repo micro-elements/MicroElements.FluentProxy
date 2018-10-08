@@ -201,8 +201,6 @@ namespace MicroElements.FluentProxy
                     _logger.LogWarning(e, "IFluentProxySettings.OnRequestFinished error.");
                 }
             }
-
-            await _next(httpContext);
         }
 
         private HttpClient CreateHttpClient(IFluentProxySettings settings)
